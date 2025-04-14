@@ -67,6 +67,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             {[
               { path: "/", label: "Dashboard", icon: Home },
               { path: "/charities", label: "Charities", icon: Heart },
+              { path: "/create-campaign", label: "Create Campaign", icon: Bitcoin },
               { path: "/my-nfts", label: "My NFTs", icon: Gift },
               { path: "/donations", label: "Donations", icon: Wallet },
             ].map((item) => (
@@ -155,6 +156,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               {[
                 { path: "/", label: "Dashboard", icon: Home },
                 { path: "/charities", label: "Charities", icon: Heart },
+                { path: "/create-campaign", label: "Create Campaign", icon: Bitcoin },
                 { path: "/my-nfts", label: "My NFTs", icon: Gift },
                 { path: "/donations", label: "Donations", icon: Wallet },
               ].map((item) => (
