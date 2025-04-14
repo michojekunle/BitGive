@@ -34,8 +34,8 @@ export default function RecentDonations() {
   ]
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <motion.div className="col-span-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+    <div className="">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <Card className="h-full overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -84,15 +84,6 @@ export default function RecentDonations() {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
-
-      <motion.div
-        className="xl:col-span-1"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <DonationForm />
       </motion.div>
     </div>
   )

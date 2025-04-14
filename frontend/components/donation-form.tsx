@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Bitcoin, ExternalLink } from "lucide-react"
 import { motion } from "framer-motion"
 
 export default function DonationForm() {
   const [amount, setAmount] = useState<string>("")
-  const [charity, setCharity] = useState<string>("")
   const [status, setStatus] = useState<string | null>(null)
 
   const handleAmountSelect = (value: string) => {
@@ -44,23 +42,9 @@ export default function DonationForm() {
     <Card className="h-full overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
       <CardHeader>
         <CardTitle>Make a Donation</CardTitle>
-        <CardDescription>Support causes you care about</CardDescription>
+        <CardDescription>Support this cause you care about</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="charity">Select a Charity</Label>
-          <Select value={charity} onValueChange={setCharity}>
-            <SelectTrigger id="charity" className="border-border/40 bg-background/50">
-              <SelectValue placeholder="Choose a cause to support" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="clean-water">Clean Water Fund</SelectItem>
-              <SelectItem value="education">Education for All</SelectItem>
-              <SelectItem value="disaster-relief">Disaster Relief</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         <div className="space-y-2">
           <Label htmlFor="amount">Donation Amount (RBTC)</Label>
           <Input
@@ -135,7 +119,7 @@ export default function DonationForm() {
         <Button
           className="w-full bg-gradient-to-r from-[#F7931A] to-[#F5A623] text-white hover:from-[#F5A623] hover:to-[#F7931A] shadow-glow-sm"
           onClick={handleDonate}
-          disabled={!amount || !charity || !!status}
+          disabled={!amount || !!status}
         >
           <Bitcoin className="mr-2 h-4 w-4" />
           Donate with RBTC
