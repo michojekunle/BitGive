@@ -4,9 +4,8 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./BitGiveRegistry.sol";
-import "./Campaign.sol";
 import "./NFTReward.sol";
-import "./CampaignFactory.sol";
+import "./CampaignManager.sol";
 
 /**
  * @title DonationManager
@@ -41,14 +40,20 @@ contract DonationManager is AccessControl, ReentrancyGuard {
         string tier
     );
 
-    modifier whenNotPaused() {
-        require(registry.isActive(), "Platform is paused");
-        _;
-    }
+    // Custom errors
+    error InvalidRegistryAddress();
+    error CampaignManagerNotSet();
+    error CampaignNotVerified();
+    error CampaignNotActive();
+    error DonationAmountZero();
+    error DonationFailed();
+    error DonationDoesNotExist();
+    error PlatformPaused();
 
     constructor(address _registryAddress) {
-        require(_registryAddress != address(0), "Invalid registry address");
+        if (_registryAddress == address(0)) revert InvalidRegistryAddress();
         registry = BitGiveRegistry(payable(_registryAddress));
+        nftReward = NFTReward(registry.nftRewardAddress());
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -66,39 +71,21 @@ contract DonationManager is AccessControl, ReentrancyGuard {
      */
     function processDonation(
         uint256 _campaignId
-    ) external payable whenNotPaused nonReentrant returns (uint256) {
-        require(msg.value > 0, "Donation amount must be greater than 0");
+    ) external payable nonReentrant returns (uint256) {
+        _checkPlatformActive();
+        if (msg.value == 0) revert DonationAmountZero();
 
         // Get campaign address from factory
-        address campaignFactoryAddress = registry.campaignFactoryAddress();
-        require(
-            campaignFactoryAddress != address(0),
-            "Campaign factory not set"
-        );
+        address CampaignManagerAddress = registry.campaignManagerAddress();
+        if (CampaignManagerAddress == address(0))
+            revert CampaignManagerNotSet();
 
-        CampaignFactory factory = CampaignFactory(campaignFactoryAddress);
-        CampaignFactory.CampaignInfo memory campaignInfo = factory
-            .getCampaignInfo(_campaignId);
+        CampaignManager.CampaignInfo memory campaignInfo = CampaignManager(
+            payable(CampaignManagerAddress)
+        ).getCampaignInfo(_campaignId);
 
-        require(campaignInfo.verified, "Campaign is not verified");
-
-        (
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            bool isActive
-        ) = Campaign(payable(campaignInfo.campaignAddress)).campaign();
-        
-        require(isActive, "Campaign is not active");
+        if (!campaignInfo.verified) revert CampaignNotVerified();
+        if (!campaignInfo.isActive) revert CampaignNotActive();
 
         // Determine NFT tier based on donation amount
         string memory tier;
@@ -114,6 +101,7 @@ contract DonationManager is AccessControl, ReentrancyGuard {
 
         // Mint NFT if eligible
         string memory nftId = "";
+
         if (
             keccak256(abi.encodePacked(tier)) !=
             keccak256(abi.encodePacked("None"))
@@ -127,10 +115,17 @@ contract DonationManager is AccessControl, ReentrancyGuard {
         }
 
         // Forward donation to campaign
-        (bool success, ) = payable(campaignInfo.campaignAddress).call{
+        (bool success, ) = payable(CampaignManagerAddress).call{
             value: msg.value
-        }(abi.encodeWithSignature("donate(string)", nftId));
-        require(success, "Donation failed");
+        }(
+            abi.encodeWithSignature(
+                "donate(uint256,string)",
+                campaignInfo.id,
+                nftId
+            )
+        );
+
+        if (!success) revert DonationFailed();
 
         // Record donation
         uint256 donationId = donationIdCounter;
@@ -139,7 +134,7 @@ contract DonationManager is AccessControl, ReentrancyGuard {
         donations[donationId] = DonationRecord({
             id: donationId,
             donor: msg.sender,
-            campaignAddress: campaignInfo.campaignAddress,
+            campaignAddress: campaignInfo.owner,
             campaignId: _campaignId,
             amount: msg.value,
             timestamp: block.timestamp,
@@ -192,7 +187,7 @@ contract DonationManager is AccessControl, ReentrancyGuard {
     function getDonationDetails(
         uint256 _donationId
     ) external view returns (DonationRecord memory) {
-        require(_donationId < donationIdCounter, "Donation does not exist");
+        if (_donationId >= donationIdCounter) revert DonationDoesNotExist();
         return donations[_donationId];
     }
 
@@ -223,5 +218,10 @@ contract DonationManager is AccessControl, ReentrancyGuard {
         }
 
         return result;
+    }
+
+    // Private functions to replace modifiers
+    function _checkPlatformActive() private view {
+        if (!registry.isActive()) revert PlatformPaused();
     }
 }

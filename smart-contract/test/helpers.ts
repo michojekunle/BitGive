@@ -2,15 +2,14 @@ import { ethers } from "hardhat";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { 
   BitGiveRegistry, 
-  CampaignFactory, 
-  Campaign, 
+  CampaignManager, 
   DonationManager, 
-  NFTReward 
+  NFTReward
 } from "../typechain-types";
 
 export interface DeployedContracts {
   registry: BitGiveRegistry;
-  campaignFactory: CampaignFactory;
+  campaignManager: CampaignManager;
   nftReward: NFTReward;
   donationManager: DonationManager;
 }
@@ -20,20 +19,20 @@ export async function deployContracts(): Promise<DeployedContracts> {
   const BitGiveRegistryFactory = await ethers.getContractFactory("BitGiveRegistry");
   const registry = await BitGiveRegistryFactory.deploy();
 
-  // Deploy CampaignFactory
-  const CampaignFactoryFactory = await ethers.getContractFactory("CampaignFactory");
-  const campaignFactory = await CampaignFactoryFactory.deploy(await registry.getAddress());
+  // Deploy CampaignManager
+  const CampaignManagerFactory = await ethers.getContractFactory("CampaignManager");
+  const campaignManager = await CampaignManagerFactory.deploy(await registry.getAddress());
 
   // Deploy NFTReward
   const NFTRewardFactory = await ethers.getContractFactory("NFTReward");
-  const nftReward = await NFTRewardFactory.deploy(await registry.getAddress());
+  const nftReward = await NFTRewardFactory.deploy(await registry.getAddress(), "https://bitgive.io/api/nft/");
 
   // Deploy DonationManager
   const DonationManagerFactory = await ethers.getContractFactory("DonationManager");
   const donationManager = await DonationManagerFactory.deploy(await registry.getAddress());
 
   // Set contract addresses in registry
-  await registry.setCampaignFactoryAddress(await campaignFactory.getAddress());
+  await registry.setCampaignManagerAddress(await campaignManager.getAddress());
   await registry.setNftRewardAddress(await nftReward.getAddress());
   await registry.setDonationManagerAddress(await donationManager.getAddress());
 
@@ -42,14 +41,14 @@ export async function deployContracts(): Promise<DeployedContracts> {
 
   return {
     registry,
-    campaignFactory,
+    campaignManager,
     nftReward,
     donationManager
   };
 }
 
 export async function createCampaign(
-  campaignFactory: CampaignFactory,
+  campaignManager: CampaignManager,
   owner: HardhatEthersSigner,
   name: string = "Test Campaign",
   description: string = "Test Description",
@@ -58,12 +57,8 @@ export async function createCampaign(
   duration: number = 30,
   impacts: string[] = ["Impact 1", "Impact 2"],
   imageURI: string = "https://example.com/image.jpg"
-): Promise<Campaign> {
-  const registryAddress = await campaignFactory.registry();
-  const registry = await ethers.getContractAt("BitGiveRegistry", registryAddress);
-  const creationFee = await registry.campaignCreationFee();
-
-  const tx = await campaignFactory.connect(owner).createCampaign(
+): Promise<CampaignManager.CampaignInfoStruct> {
+  const tx = await campaignManager.connect(owner).createCampaign(
     name,
     description,
     story,
@@ -71,17 +66,17 @@ export async function createCampaign(
     duration,
     impacts,
     imageURI,
-    { value: creationFee }
   );
 
   const receipt = await tx.wait();
   const event = receipt?.logs
-    .filter((log :any) => log.fragment?.name === "CampaignCreated")
-    .map((log: any) => campaignFactory.interface.parseLog(log))[0];
-    
-  const campaignAddress = event?.args.campaignAddress;
+    .filter((log: any) => log.fragment?.name === "CampaignCreated")
+    .map((log: any) => campaignManager.interface.parseLog(log))[0];
 
-  return await ethers.getContractAt("Campaign", campaignAddress) as Campaign;
+  const campaignId = event?.args?.campaignId;    
+  const campaign = campaignManager.connect(owner).getCampaignInfo(campaignId);
+
+  return campaign;
 }
 
 export async function timeTravel(seconds: number): Promise<void> {

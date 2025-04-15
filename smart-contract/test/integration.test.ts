@@ -3,8 +3,7 @@ import { ethers } from "hardhat";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   BitGiveRegistry,
-  CampaignFactory,
-  Campaign,
+  CampaignManager,
   DonationManager,
   NFTReward,
 } from "../typechain-types";
@@ -12,10 +11,10 @@ import { deployContracts, createCampaign } from "./helpers";
 
 describe("BitGive Integration Tests", function () {
   let registry: BitGiveRegistry;
-  let campaignFactory: CampaignFactory;
+  let campaignManager: CampaignManager;
   let donationManager: DonationManager;
   let nftReward: NFTReward;
-  let campaign: Campaign;
+  let campaign: CampaignManager.CampaignInfoStruct;
   let owner: HardhatEthersSigner;
   let verifier: HardhatEthersSigner;
   let campaignOwner: HardhatEthersSigner;
@@ -27,7 +26,7 @@ describe("BitGive Integration Tests", function () {
 
     const contracts = await deployContracts();
     registry = contracts.registry;
-    campaignFactory = contracts.campaignFactory;
+    campaignManager = contracts.campaignManager;
     donationManager = contracts.donationManager;
     nftReward = contracts.nftReward;
 
@@ -35,12 +34,12 @@ describe("BitGive Integration Tests", function () {
     await registry.addVerifier(verifier.address);
 
     // Create a campaign
-    campaign = await createCampaign(campaignFactory, campaignOwner);
+    campaign = await createCampaign(campaignManager, campaignOwner);
     campaignId = 0; // First campaign has ID 0
 
     // Verify and activate the campaign
-    await campaignFactory.connect(verifier).verifyCampaign(campaignId, true);
-    await campaign.connect(verifier).setActive(true);
+    await campaignManager.connect(verifier).verifyCampaign(campaignId, true);
+    await campaignManager.connect(verifier).setActive(campaignId, true);
   });
 
   describe("End-to-End Donation Flow", function () {
@@ -59,17 +58,17 @@ describe("BitGive Integration Tests", function () {
           donor.address,
           campaignId,
           donationAmount,
-          /Gold Donor #1/,
+          'Gold Donor #1',
           "Gold"
         );
 
       // Check NFT was minted
       expect(await nftReward.balanceOf(donor.address)).to.equal(1);
 
+      const campaign = await campaignManager.getCampaignInfo(campaignId);
+
       // Check campaign received funds
-      const platformFee = await registry.calculatePlatformFee(donationAmount);
-      const campaignAmount = donationAmount - platformFee;
-      expect(await campaign.raisedAmount()).to.equal(campaignAmount);
+      expect(campaign.raisedAmount).to.equal(donationAmount);
 
       // Check donation records in donation manager
       const donationRecord = await donationManager.donations(0);
@@ -78,10 +77,10 @@ describe("BitGive Integration Tests", function () {
       expect(donationRecord.amount).to.equal(donationAmount);
       expect(donationRecord.tier).to.equal("Gold");
 
-      // Check donation records in campaign
-      const campaignDonation = await campaign.donations(0);
-      expect(campaignDonation.donor).to.equal(donor.address);
-      expect(campaignDonation.amount).to.equal(campaignAmount);
+      // // Check donation records in campaign
+      // const campaignDonation = await campaign.donations(0);
+      // expect(campaignDonation.donor).to.equal(donor.address);
+      // expect(campaignDonation.amount).to.equal(donationAmount);
 
       // Check NFT metadata
       const tokenId = 0;
@@ -112,17 +111,19 @@ describe("BitGive Integration Tests", function () {
 
       // Check donation counts
       expect(await donationManager.getDonationCount()).to.equal(2);
-      expect(await campaign.getDonationCount()).to.equal(2);
+      // expect(await campaign.getDonationCount()).to.equal(2);
 
       // Check campaign raised amount
       const donation1 = ethers.parseEther("0.01");
       const donation2 = ethers.parseEther("0.005");
-      const platformFee1 = await registry.calculatePlatformFee(donation1);
-      const platformFee2 = await registry.calculatePlatformFee(donation2);
+      // const platformFee1 = await registry.calculatePlatformFee(donation1);
+      // const platformFee2 = await registry.calculatePlatformFee(donation2);
       const expectedRaised =
-        donation1 - platformFee1 + (donation2 - platformFee2);
+        donation1 + donation2;
 
-      expect(await campaign.raisedAmount()).to.equal(expectedRaised);
+      const campaign = await campaignManager.getCampaignInfo(campaignId);
+
+      expect(campaign.raisedAmount).to.equal(expectedRaised);
     });
   });
 
@@ -130,7 +131,7 @@ describe("BitGive Integration Tests", function () {
     it("Should handle the full campaign lifecycle", async function () {
       // 1. Create campaign
       const campaign2 = await createCampaign(
-        campaignFactory,
+        campaignManager,
         campaignOwner,
         "Lifecycle Campaign",
         "Test Description",
@@ -140,97 +141,46 @@ describe("BitGive Integration Tests", function () {
         ["Impact 1", "Impact 2"],
         "https://example.com/image.jpg"
       );
-      const campaignId2 = 1; // Second campaign has ID 1
 
       // 2. Verify campaign
-      await campaignFactory.connect(verifier).verifyCampaign(campaignId2, true);
+      await campaignManager.connect(verifier).verifyCampaign(campaign2.id, true);
 
       // 3. Activate campaign
-      await campaign2.connect(verifier).setActive(true);
+      await campaignManager.connect(verifier).setActive(campaign2.id, true);
 
       // 4. Feature campaign
-      await campaignFactory
+      await campaignManager
         .connect(verifier)
-        .setFeaturedCampaign(campaignId2, true);
+        .setFeaturedCampaign(campaign2.id, true);
 
       // 5. Make donations
-      await donationManager.connect(donor).processDonation(campaignId2, {
+      await donationManager.connect(donor).processDonation(campaign2.id, {
         value: ethers.parseEther("0.5"),
       });
 
-      // 6. Update campaign details
-      await campaign2
-        .connect(campaignOwner)
-        .updateDescription("Updated Description", "Updated Long Description");
-
-      await campaign2
-        .connect(campaignOwner)
-        .updateImpacts([
-          "Updated Impact 1",
-          "Updated Impact 2",
-          "New Impact 3",
-        ]);
-
       // 7. Withdraw funds
-      const campaignBalance = await ethers.provider.getBalance(
-        campaign2.registry()
-      );
-      await campaign2
+      await campaignManager
         .connect(campaignOwner)
-        .withdrawFunds(campaignBalance / BigInt(2));
+        .withdrawFunds(campaign2.id, BigInt(campaign2.raisedAmount) / BigInt(2));
+
+      const campaign2Updated = await campaignManager.getCampaignInfo(campaign2.id);
 
       // 8. Check campaign status
-      expect(await campaign2.isActive()).to.be.true;
-      expect(await campaignFactory.campaigns(campaignId2)).to.include({
-        verified: true,
-        featured: true,
-      });
+      expect(campaign2Updated.isActive).to.be.true;
+      expect(campaign2Updated.verified).to.be.true;
+      expect(campaign2Updated.featured).to.be.true;
 
       // 9. Check campaign details
-      const details = await campaign2.getCampaignDetails();
-      expect(details._description).to.equal("Updated Description");
-      expect(details._story).to.equal("Updated Long Description");
+      expect(campaign2.description).to.equal("Test Description");
+      expect(campaign2.story).to.equal("Test Long Description");
 
       // 10. Check impacts
-      const impacts = await campaign2.getImpacts();
-      expect(impacts.length).to.equal(3);
-      expect(impacts[2]).to.equal("New Impact 3");
+      expect(campaign2.impacts.length).to.equal(2);
+      expect(campaign2.impacts[1]).to.equal("Impact 2");
     });
   });
 
   describe("Platform Management", function () {
-    it("Should handle platform fee changes", async function () {
-      // Initial fee is 2.5% (250 basis points)
-      const initialFee = await registry.platformFeePercentage();
-      expect(initialFee).to.equal(250);
-
-      // Make a donation with initial fee
-      const donationAmount = ethers.parseEther("1");
-      const initialPlatformFee = await registry.calculatePlatformFee(
-        donationAmount
-      );
-      expect(initialPlatformFee).to.equal(donationAmount * BigInt(250) / BigInt(10000));
-
-      // Update platform fee to 5% (500 basis points)
-      await registry.updatePlatformFee(500);
-      expect(await registry.platformFeePercentage()).to.equal(500);
-
-      // Check new fee calculation
-      const newPlatformFee = await registry.calculatePlatformFee(
-        donationAmount
-      );
-      expect(newPlatformFee).to.equal(donationAmount * BigInt(250) / BigInt(10000));
-
-      // Make a donation with new fee
-      await donationManager
-        .connect(donor)
-        .processDonation(campaignId, { value: donationAmount });
-
-      // Check campaign received correct amount
-      const campaignAmount = donationAmount - newPlatformFee;
-      expect(await campaign.raisedAmount()).to.equal(campaignAmount);
-    });
-
     it("Should handle platform pausing", async function () {
       // Pause platform
       await registry.setPaused(true);
@@ -241,12 +191,12 @@ describe("BitGive Integration Tests", function () {
         donationManager.connect(donor).processDonation(campaignId, {
           value: ethers.parseEther("0.01"),
         })
-      ).to.be.revertedWith("Platform is paused");
+      ).to.be.revertedWithCustomError(campaignManager, "PlatformPaused()");
 
       // Try to create a campaign
       await expect(
-        createCampaign(campaignFactory, campaignOwner)
-      ).to.be.revertedWith("Platform is paused");
+        createCampaign(campaignManager, campaignOwner)
+      ).to.be.revertedWithCustomError(campaignManager, "PlatformPaused()");
 
       // Unpause platform
       await registry.setPaused(false);

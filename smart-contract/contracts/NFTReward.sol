@@ -32,6 +32,11 @@ contract NFTReward is ERC721URIStorage, AccessControl {
 
     string public baseURI;
 
+    // Custom errors
+    error InvalidRegistryAddress();
+    error CallerNotMinter();
+    error TokenDoesNotExist();
+
     event NFTMinted(
         uint256 indexed tokenId,
         address indexed recipient,
@@ -40,21 +45,12 @@ contract NFTReward is ERC721URIStorage, AccessControl {
         uint256 indexed campaignId
     );
 
-    modifier onlyMinter() {
-        require(
-            hasRole(MINTER_ROLE, msg.sender) ||
-                msg.sender == registry.donationManagerAddress(),
-            "Caller is not a minter"
-        );
-        _;
-    }
-
-    constructor(address _registryAddress) ERC721("BitGive Donor NFT", "BGIVE") {
-        require(_registryAddress != address(0), "Invalid registry address");
+    constructor(address _registryAddress, string memory _baseURI) ERC721("BitGive Donor NFT", "BGIVE") {
+        if (_registryAddress == address(0)) revert InvalidRegistryAddress();
         registry = BitGiveRegistry(payable(_registryAddress));
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
-        baseURI = "https://bitgive.io/api/nft/";
+        baseURI = _baseURI;
     }
 
     /**
@@ -80,7 +76,9 @@ contract NFTReward is ERC721URIStorage, AccessControl {
         string memory _tier,
         string memory _campaignName,
         uint256 _campaignId
-    ) external onlyMinter returns (string memory) {
+    ) external returns (string memory) {
+        _checkMinter();
+
         uint256 tokenId = tokenIdCounter;
         tokenIdCounter++;
 
@@ -146,7 +144,7 @@ contract NFTReward is ERC721URIStorage, AccessControl {
     function getNFTMetadata(
         uint256 _tokenId
     ) external view returns (NFTMetadata memory) {
-        require(_exists(_tokenId), "Token does not exist");
+        if (!_exists(_tokenId)) revert TokenDoesNotExist();
         return nftMetadata[_tokenId];
     }
 
@@ -174,6 +172,16 @@ contract NFTReward is ERC721URIStorage, AccessControl {
      */
     function _exists(uint256 tokenId) internal view returns (bool) {
         return _ownerOf(tokenId) != address(0);
+    }
+
+    /**
+     * @dev Checks if the caller is a minter
+     */
+    function _checkMinter() private view {
+        if (
+            !hasRole(MINTER_ROLE, msg.sender) &&
+            msg.sender != registry.donationManagerAddress()
+        ) revert CallerNotMinter();
     }
 
     /**

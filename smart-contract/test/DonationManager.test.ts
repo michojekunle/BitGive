@@ -3,8 +3,7 @@ import { ethers } from "hardhat";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   BitGiveRegistry,
-  CampaignFactory,
-  Campaign,
+  CampaignManager,
   DonationManager,
   NFTReward,
 } from "../typechain-types";
@@ -12,10 +11,10 @@ import { deployContracts, createCampaign, ROLES } from "./helpers";
 
 describe("DonationManager", function () {
   let registry: BitGiveRegistry;
-  let campaignFactory: CampaignFactory;
+  let campaignManager: CampaignManager;
   let donationManager: DonationManager;
+  let campaign: CampaignManager.CampaignInfoStruct;
   let nftReward: NFTReward;
-  let campaign: Campaign;
   let owner: HardhatEthersSigner;
   let admin: HardhatEthersSigner;
   let verifier: HardhatEthersSigner;
@@ -30,7 +29,7 @@ describe("DonationManager", function () {
 
     const contracts = await deployContracts();
     registry = contracts.registry;
-    campaignFactory = contracts.campaignFactory;
+    campaignManager = contracts.campaignManager;
     donationManager = contracts.donationManager;
     nftReward = contracts.nftReward;
 
@@ -38,12 +37,12 @@ describe("DonationManager", function () {
     await registry.addVerifier(verifier.address);
 
     // Create a campaign
-    campaign = await createCampaign(campaignFactory, campaignOwner);
+    campaign = await createCampaign(campaignManager, campaignOwner);
     campaignId = 0; // First campaign has ID 0
 
     // Verify and activate the campaign
-    await campaignFactory.connect(verifier).verifyCampaign(campaignId, true);
-    await campaign.connect(verifier).setActive(true);
+    await campaignManager.connect(verifier).verifyCampaign(campaignId, true);
+    await campaignManager.connect(verifier).setActive(campaignId, true);
   });
 
   describe("Deployment", function () {
@@ -71,7 +70,7 @@ describe("DonationManager", function () {
           donor1.address,
           campaignId,
           donationAmount,
-          /Gold Donor #1/,
+          'Gold Donor #1',
           "Gold"
         );
 
@@ -85,10 +84,9 @@ describe("DonationManager", function () {
       // Check NFT was minted
       expect(await nftReward.balanceOf(donor1.address)).to.equal(1);
 
+      const campaign = await campaignManager.getCampaignInfo(campaignId);
       // Check campaign received funds
-      const platformFee = await registry.calculatePlatformFee(donationAmount);
-      const campaignAmount = donationAmount - platformFee;
-      expect(await campaign.raisedAmount()).to.equal(campaignAmount);
+      expect(campaign.raisedAmount).to.equal(donationAmount);
     });
 
     it("Should process donation and mint NFT for Silver tier", async function () {
@@ -136,25 +134,25 @@ describe("DonationManager", function () {
 
     it("Should reject donations to unverified campaigns", async function () {
       // Create a new unverified campaign
-      await createCampaign(campaignFactory, campaignOwner);
+      await createCampaign(campaignManager, campaignOwner);
       const unverifiedCampaignId = 1;
 
       await expect(
         donationManager.connect(donor1).processDonation(unverifiedCampaignId, {
           value: ethers.parseEther("0.01"),
         })
-      ).to.be.revertedWith("Campaign is not verified");
+      ).to.be.revertedWithCustomError(donationManager, "CampaignNotVerified()");
     });
 
     it("Should reject donations to inactive campaigns", async function () {
       // Deactivate the campaign
-      await campaign.connect(verifier).setActive(false);
+      await campaignManager.connect(verifier).setActive(campaignId, false);
 
       await expect(
         donationManager.connect(donor1).processDonation(campaignId, {
           value: ethers.parseEther("0.01"),
         })
-      ).to.be.revertedWith("Campaign is not active");
+      ).to.be.revertedWithCustomError(donationManager, "CampaignNotActive()");
     });
 
     it("Should reject donations when platform is paused", async function () {
@@ -165,7 +163,7 @@ describe("DonationManager", function () {
         donationManager.connect(donor1).processDonation(campaignId, {
           value: ethers.parseEther("0.01"),
         })
-      ).to.be.revertedWith("Platform is paused");
+      ).to.be.revertedWithCustomError(donationManager, "PlatformPaused()");
     });
   });
 

@@ -12,42 +12,35 @@ contract BitGiveRegistry is AccessControl, ReentrancyGuard {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant VERIFIER_ROLE = keccak256("VERIFIER_ROLE");
 
-    address public campaignFactoryAddress;
+    address public campaignManagerAddress;
     address public donationManagerAddress;
+
     address public nftRewardAddress;
-
-    uint256 public platformFeePercentage; // In basis points (1/100 of a percent)
-    uint256 public campaignCreationFee; // In wei
-
     bool public paused;
 
     event ContractAddressUpdated(
         string contractName,
         address indexed newAddress
     );
-    event PlatformFeeUpdated(uint256 newFeePercentage);
-    event CampaignCreationFeeUpdated(uint256 newFee);
     event PlatformPaused(bool paused);
 
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
 
-        platformFeePercentage = 250; // 2.5% default fee
-        campaignCreationFee = 0.001 ether; // 0.001 RBTC default fee
         paused = false;
     }
 
     /**
      * @dev Sets the address of the campaign factory contract
-     * @param _campaignFactoryAddress Address of the campaign factory contract
+     * @param _campaignManagerAddress Address of the campaign factory contract
      */
-    function setCampaignFactoryAddress(
-        address _campaignFactoryAddress
+    function setCampaignManagerAddress(
+        address _campaignManagerAddress
     ) external onlyRole(ADMIN_ROLE) {
-        require(_campaignFactoryAddress != address(0), "Invalid address");
-        campaignFactoryAddress = _campaignFactoryAddress;
-        emit ContractAddressUpdated("CampaignFactory", _campaignFactoryAddress);
+        require(_campaignManagerAddress != address(0), "Invalid address");
+        campaignManagerAddress = _campaignManagerAddress;
+        emit ContractAddressUpdated("CampaignFactory", _campaignManagerAddress);
     }
 
     /**
@@ -72,29 +65,6 @@ contract BitGiveRegistry is AccessControl, ReentrancyGuard {
         require(_nftRewardAddress != address(0), "Invalid address");
         nftRewardAddress = _nftRewardAddress;
         emit ContractAddressUpdated("NFTReward", _nftRewardAddress);
-    }
-
-    /**
-     * @dev Updates the platform fee percentage
-     * @param _platformFeePercentage New platform fee percentage in basis points
-     */
-    function updatePlatformFee(
-        uint256 _platformFeePercentage
-    ) external onlyRole(ADMIN_ROLE) {
-        require(_platformFeePercentage <= 1000, "Fee cannot exceed 10%");
-        platformFeePercentage = _platformFeePercentage;
-        emit PlatformFeeUpdated(_platformFeePercentage);
-    }
-
-    /**
-     * @dev Updates the campaign creation fee
-     * @param _campaignCreationFee New campaign creation fee in wei
-     */
-    function updateCampaignCreationFee(
-        uint256 _campaignCreationFee
-    ) external onlyRole(ADMIN_ROLE) {
-        campaignCreationFee = _campaignCreationFee;
-        emit CampaignCreationFeeUpdated(_campaignCreationFee);
     }
 
     /**
@@ -128,20 +98,4 @@ contract BitGiveRegistry is AccessControl, ReentrancyGuard {
     function isActive() public view returns (bool) {
         return !paused;
     }
-
-    /**
-     * @dev Calculates the platform fee for a given amount
-     * @param _amount Amount to calculate fee for
-     * @return Fee amount
-     */
-    function calculatePlatformFee(
-        uint256 _amount
-    ) public view returns (uint256) {
-        return (_amount * platformFeePercentage) / 10000;
-    }
-
-    /**
-     * @dev Receive function to accept platform fees
-     */
-    receive() external payable {}
 }
