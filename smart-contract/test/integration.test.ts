@@ -20,6 +20,7 @@ describe("BitGive Integration Tests", function () {
   let campaignOwner: HardhatEthersSigner;
   let donor: HardhatEthersSigner;
   let campaignId: number;
+  const tokenURI = 'https://ipfs:23rnrfioerjoiorjndfioriojfjofr';
 
   beforeEach(async function () {
     [owner, verifier, campaignOwner, donor] = await ethers.getSigners();
@@ -50,7 +51,7 @@ describe("BitGive Integration Tests", function () {
       await expect(
         donationManager
           .connect(donor)
-          .processDonation(campaignId, { value: donationAmount })
+          .processDonation(campaignId, tokenURI, { value: donationAmount })
       )
         .to.emit(donationManager, "DonationProcessed")
         .withArgs(
@@ -77,11 +78,6 @@ describe("BitGive Integration Tests", function () {
       expect(donationRecord.amount).to.equal(donationAmount);
       expect(donationRecord.tier).to.equal("Gold");
 
-      // // Check donation records in campaign
-      // const campaignDonation = await campaign.donations(0);
-      // expect(campaignDonation.donor).to.equal(donor.address);
-      // expect(campaignDonation.amount).to.equal(donationAmount);
-
       // Check NFT metadata
       const tokenId = 0;
       const metadata = await nftReward.getNFTMetadata(tokenId);
@@ -91,13 +87,13 @@ describe("BitGive Integration Tests", function () {
 
     it("Should handle multiple donations from different donors", async function () {
       // First donation - Gold tier
-      await donationManager.connect(donor).processDonation(campaignId, {
+      await donationManager.connect(donor).processDonation(campaignId, tokenURI, {
         value: ethers.parseEther("0.01"),
       });
 
       // Second donation - Silver tier from a different donor
       const donor2 = (await ethers.getSigners())[4];
-      await donationManager.connect(donor2).processDonation(campaignId, {
+      await donationManager.connect(donor2).processDonation(campaignId, tokenURI, {
         value: ethers.parseEther("0.005"),
       });
 
@@ -111,13 +107,11 @@ describe("BitGive Integration Tests", function () {
 
       // Check donation counts
       expect(await donationManager.getDonationCount()).to.equal(2);
-      // expect(await campaign.getDonationCount()).to.equal(2);
 
       // Check campaign raised amount
       const donation1 = ethers.parseEther("0.01");
       const donation2 = ethers.parseEther("0.005");
-      // const platformFee1 = await registry.calculatePlatformFee(donation1);
-      // const platformFee2 = await registry.calculatePlatformFee(donation2);
+
       const expectedRaised =
         donation1 + donation2;
 
@@ -154,7 +148,7 @@ describe("BitGive Integration Tests", function () {
         .setFeaturedCampaign(campaign2.id, true);
 
       // 5. Make donations
-      await donationManager.connect(donor).processDonation(campaign2.id, {
+      await donationManager.connect(donor).processDonation(campaign2.id, tokenURI, {
         value: ethers.parseEther("0.5"),
       });
 
@@ -188,7 +182,7 @@ describe("BitGive Integration Tests", function () {
 
       // Try to make a donation
       await expect(
-        donationManager.connect(donor).processDonation(campaignId, {
+        donationManager.connect(donor).processDonation(campaignId, tokenURI, {
           value: ethers.parseEther("0.01"),
         })
       ).to.be.revertedWithCustomError(campaignManager, "PlatformPaused()");
@@ -204,7 +198,7 @@ describe("BitGive Integration Tests", function () {
 
       // Now donation should work
       await expect(
-        donationManager.connect(donor).processDonation(campaignId, {
+        donationManager.connect(donor).processDonation(campaignId, tokenURI, {
           value: ethers.parseEther("0.01"),
         })
       ).to.not.be.reverted;

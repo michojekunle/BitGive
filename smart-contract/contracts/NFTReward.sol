@@ -30,8 +30,6 @@ contract NFTReward is ERC721URIStorage, AccessControl {
     mapping(address => uint256[]) public ownerTokens;
     mapping(string => uint256) public tierCounter;
 
-    string public baseURI;
-
     // Custom errors
     error InvalidRegistryAddress();
     error CallerNotMinter();
@@ -45,24 +43,12 @@ contract NFTReward is ERC721URIStorage, AccessControl {
         uint256 indexed campaignId
     );
 
-    constructor(address _registryAddress, string memory _baseURI) ERC721("BitGive Donor NFT", "BGIVE") {
+    constructor(address _registryAddress) ERC721("BitGive Donor NFT", "BGIVE") {
         if (_registryAddress == address(0)) revert InvalidRegistryAddress();
         registry = BitGiveRegistry(payable(_registryAddress));
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
-        baseURI = _baseURI;
     }
-
-    /**
-     * @dev Sets the base URI for token metadata
-     * @param _baseURI New base URI
-     */
-    function setBaseURI(
-        string memory _baseURI
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        baseURI = _baseURI;
-    }
-
     /**
      * @dev Mints a new NFT reward
      * @param _recipient Recipient address
@@ -75,7 +61,8 @@ contract NFTReward is ERC721URIStorage, AccessControl {
         address _recipient,
         string memory _tier,
         string memory _campaignName,
-        uint256 _campaignId
+        uint256 _campaignId,
+        string memory _tokenURI
     ) external returns (string memory) {
         _checkMinter();
 
@@ -99,18 +86,7 @@ contract NFTReward is ERC721URIStorage, AccessControl {
         // Update owner tokens
         ownerTokens[_recipient].push(tokenId);
 
-        // Generate token URI
-        string memory tokenURI = string(
-            abi.encodePacked(
-                baseURI,
-                tokenId.toString(),
-                "?tier=",
-                _tier,
-                "&campaign=",
-                _campaignId.toString()
-            )
-        );
-        _setTokenURI(tokenId, tokenURI);
+        _setTokenURI(tokenId, _tokenURI);
 
         emit NFTMinted(tokenId, _recipient, _tier, _campaignName, _campaignId);
 
@@ -134,6 +110,15 @@ contract NFTReward is ERC721URIStorage, AccessControl {
         address _owner
     ) external view returns (uint256[] memory) {
         return ownerTokens[_owner];
+    }
+
+    /**
+     * @dev Gets all next tier count for a particular tiear of donor
+     * @param _tier tier string -- "Gold" | "Silver" | "Bronze"
+     * @return the next tier number
+     */
+    function getNextTierCount(string memory _tier) external view returns(uint256) {
+        return tierCounter[_tier] + 1;
     }
 
     /**

@@ -25,7 +25,7 @@ export async function deployContracts(): Promise<DeployedContracts> {
 
   // Deploy NFTReward
   const NFTRewardFactory = await ethers.getContractFactory("NFTReward");
-  const nftReward = await NFTRewardFactory.deploy(await registry.getAddress(), "https://bitgive.io/api/nft/");
+  const nftReward = await NFTRewardFactory.deploy(await registry.getAddress());
 
   // Deploy DonationManager
   const DonationManagerFactory = await ethers.getContractFactory("DonationManager");
