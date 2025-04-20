@@ -22,6 +22,7 @@ describe("DonationManager", function () {
   let donor1: HardhatEthersSigner;
   let donor2: HardhatEthersSigner;
   let campaignId: number;
+  const tokenURI = 'https://ipfs:23rnrfioerjoiorjndfioriojfjofr';
 
   beforeEach(async function () {
     [owner, admin, verifier, campaignOwner, donor1, donor2] =
@@ -62,7 +63,7 @@ describe("DonationManager", function () {
       await expect(
         donationManager
           .connect(donor1)
-          .processDonation(campaignId, { value: donationAmount })
+          .processDonation(campaignId, tokenURI, { value: donationAmount })
       )
         .to.emit(donationManager, "DonationProcessed")
         .withArgs(
@@ -94,7 +95,7 @@ describe("DonationManager", function () {
 
       await donationManager
         .connect(donor1)
-        .processDonation(campaignId, { value: donationAmount });
+        .processDonation(campaignId, tokenURI, { value: donationAmount });
 
       const donation = await donationManager.donations(0);
       expect(donation.tier).to.equal("Silver");
@@ -108,7 +109,7 @@ describe("DonationManager", function () {
 
       await donationManager
         .connect(donor1)
-        .processDonation(campaignId, { value: donationAmount });
+        .processDonation(campaignId, tokenURI, { value: donationAmount });
 
       const donation = await donationManager.donations(0);
       expect(donation.tier).to.equal("Bronze");
@@ -122,7 +123,7 @@ describe("DonationManager", function () {
 
       await donationManager
         .connect(donor1)
-        .processDonation(campaignId, { value: donationAmount });
+        .processDonation(campaignId, tokenURI, { value: donationAmount });
 
       const donation = await donationManager.donations(0);
       expect(donation.tier).to.equal("None");
@@ -138,7 +139,7 @@ describe("DonationManager", function () {
       const unverifiedCampaignId = 1;
 
       await expect(
-        donationManager.connect(donor1).processDonation(unverifiedCampaignId, {
+        donationManager.connect(donor1).processDonation(unverifiedCampaignId, tokenURI, {
           value: ethers.parseEther("0.01"),
         })
       ).to.be.revertedWithCustomError(donationManager, "CampaignNotVerified()");
@@ -149,7 +150,7 @@ describe("DonationManager", function () {
       await campaignManager.connect(verifier).setActive(campaignId, false);
 
       await expect(
-        donationManager.connect(donor1).processDonation(campaignId, {
+        donationManager.connect(donor1).processDonation(campaignId, tokenURI, {
           value: ethers.parseEther("0.01"),
         })
       ).to.be.revertedWithCustomError(donationManager, "CampaignNotActive()");
@@ -160,7 +161,7 @@ describe("DonationManager", function () {
       await registry.setPaused(true);
 
       await expect(
-        donationManager.connect(donor1).processDonation(campaignId, {
+        donationManager.connect(donor1).processDonation(campaignId, tokenURI, {
           value: ethers.parseEther("0.01"),
         })
       ).to.be.revertedWithCustomError(donationManager, "PlatformPaused()");
@@ -170,13 +171,13 @@ describe("DonationManager", function () {
   describe("Donation Queries", function () {
     beforeEach(async function () {
       // Process multiple donations
-      await donationManager.connect(donor1).processDonation(campaignId, {
+      await donationManager.connect(donor1).processDonation(campaignId, tokenURI, {
         value: ethers.parseEther("0.01"),
       });
-      await donationManager.connect(donor2).processDonation(campaignId, {
+      await donationManager.connect(donor2).processDonation(campaignId, tokenURI, {
         value: ethers.parseEther("0.005"),
       });
-      await donationManager.connect(donor1).processDonation(campaignId, {
+      await donationManager.connect(donor1).processDonation(campaignId, tokenURI, {
         value: ethers.parseEther("0.001"),
       });
     });

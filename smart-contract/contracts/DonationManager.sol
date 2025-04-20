@@ -70,7 +70,8 @@ contract DonationManager is AccessControl, ReentrancyGuard {
      * @return donationId ID of the processed donation
      */
     function processDonation(
-        uint256 _campaignId
+        uint256 _campaignId,
+        string memory _tokenURI
     ) external payable nonReentrant returns (uint256) {
         _checkPlatformActive();
         if (msg.value == 0) revert DonationAmountZero();
@@ -110,7 +111,8 @@ contract DonationManager is AccessControl, ReentrancyGuard {
                 msg.sender,
                 tier,
                 campaignInfo.name,
-                _campaignId
+                _campaignId,
+                _tokenURI
             );
         }
 

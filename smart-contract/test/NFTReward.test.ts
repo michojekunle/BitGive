@@ -12,6 +12,7 @@ describe("NFTReward", function () {
   let donationManager: HardhatEthersSigner;
   let recipient1: HardhatEthersSigner;
   let recipient2: HardhatEthersSigner;
+  const tokenURI = 'https://ipfs:23rnrfioerjoiorjndfioriojfjofr';
 
   beforeEach(async function () {
     [owner, admin, donationManager, recipient1, recipient2] =
@@ -35,10 +36,6 @@ describe("NFTReward", function () {
       expect(await nftReward.symbol()).to.equal("BGIVE");
     });
 
-    it("Should set the default base URI", async function () {
-      expect(await nftReward.baseURI()).to.equal("https://bitgive.io/api/nft/");
-    });
-
     it("Should grant minter role to owner", async function () {
       expect(await nftReward.hasRole(ROLES.MINTER_ROLE, owner.address)).to.be
         .true;
@@ -49,7 +46,7 @@ describe("NFTReward", function () {
     it("Should allow minter to mint NFT", async function () {
       const tx = await nftReward
         .connect(owner)
-        .mintNFT(recipient1.address, "Gold", "Test Campaign", 0);
+        .mintNFT(recipient1.address, "Gold", "Test Campaign", 0, tokenURI);
 
       const receipt = await tx.wait();
 
@@ -72,12 +69,6 @@ describe("NFTReward", function () {
       expect(metadata.campaignName).to.equal("Test Campaign");
       expect(metadata.campaignId).to.equal(0);
 
-      // Check token URI
-      const tokenURI = await nftReward.tokenURI(tokenId);
-      expect(tokenURI).to.include("https://bitgive.io/api/nft/");
-      expect(tokenURI).to.include("tier=Gold");
-      expect(tokenURI).to.include("campaign=0");
-
       // Check tier counter
       expect(await nftReward.tierCounter("Gold")).to.equal(1);
 
@@ -91,7 +82,7 @@ describe("NFTReward", function () {
       await expect(
         nftReward
           .connect(donationManager)
-          .mintNFT(recipient1.address, "Silver", "Test Campaign", 0)
+          .mintNFT(recipient1.address, "Silver", "Test Campaign", 0, tokenURI)
       ).to.not.be.reverted;
     });
 
@@ -99,7 +90,7 @@ describe("NFTReward", function () {
       await expect(
         nftReward
           .connect(recipient2)
-          .mintNFT(recipient1.address, "Gold", "Test Campaign", 0)
+          .mintNFT(recipient1.address, "Gold", "Test Campaign", 0, tokenURI)
       ).to.be.revertedWithCustomError(nftReward, "CallerNotMinter()");
     });
 
@@ -107,17 +98,17 @@ describe("NFTReward", function () {
       // Mint first Gold NFT
       await nftReward
         .connect(owner)
-        .mintNFT(recipient1.address, "Gold", "Test Campaign", 0);
+        .mintNFT(recipient1.address, "Gold", "Test Campaign", 0, tokenURI);
 
       // Mint second Gold NFT
       await nftReward
         .connect(owner)
-        .mintNFT(recipient2.address, "Gold", "Test Campaign", 0);
+        .mintNFT(recipient2.address, "Gold", "Test Campaign", 0, tokenURI);
 
       // Mint Silver NFT
       await nftReward
         .connect(owner)
-        .mintNFT(recipient1.address, "Silver", "Test Campaign", 0);
+        .mintNFT(recipient1.address, "Silver", "Test Campaign", 0, tokenURI);
 
       // Check tier counters
       expect(await nftReward.tierCounter("Gold")).to.equal(2);
@@ -142,7 +133,7 @@ describe("NFTReward", function () {
     it("Should return NFT ID in correct format", async function () {
       const tx1 = await nftReward
         .connect(owner)
-        .mintNFT(recipient1.address, "Gold", "Test Campaign", 0);
+        .mintNFT(recipient1.address, "Gold", "Test Campaign", 0, tokenURI);
 
       const receipt1 = await tx1.wait();
       const event1 = receipt1?.logs
@@ -151,19 +142,12 @@ describe("NFTReward", function () {
 
       const nftId1 = event1?.args?.tokenId;
       const nftId1String = await nftReward.tokenURI(nftId1);
-      console.log(nftId1String);
 
-      expect(nftId1String).to.include("Gold");
+      expect(nftId1String).to.include("ipfs");
 
-      // Actually mint the NFT
-      await nftReward
-        .connect(owner)
-        .mintNFT(recipient1.address, "Gold", "Test Campaign", 0);
-
-      // Check second NFT ID
       const tx2 = await nftReward
         .connect(owner)
-        .mintNFT(recipient2.address, "Gold", "Test Campaign", 0);
+        .mintNFT(recipient2.address, "Gold", "Test Campaign", 0, tokenURI);
 
       const receipt2 = await tx2.wait();
       const event2 = receipt2?.logs
@@ -172,7 +156,7 @@ describe("NFTReward", function () {
 
       const nftId2 = event2?.args?.tokenId;
 
-      expect(await nftReward.tokenURI(nftId2)).to.include("Gold");
+      expect(await nftReward.tokenURI(nftId2)).to.include("ipfs");
     });
   });
 
@@ -181,15 +165,15 @@ describe("NFTReward", function () {
       // Mint some NFTs
       await nftReward
         .connect(owner)
-        .mintNFT(recipient1.address, "Gold", "Campaign 1", 0);
+        .mintNFT(recipient1.address, "Gold", "Campaign 1", 0, tokenURI);
 
       await nftReward
         .connect(owner)
-        .mintNFT(recipient1.address, "Silver", "Campaign 2", 1);
+        .mintNFT(recipient1.address, "Silver", "Campaign 2", 1, tokenURI);
 
       await nftReward
         .connect(owner)
-        .mintNFT(recipient2.address, "Bronze", "Campaign 1", 0);
+        .mintNFT(recipient2.address, "Bronze", "Campaign 1", 0, tokenURI);
     });
 
     it("Should get NFT metadata", async function () {
