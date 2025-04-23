@@ -27,6 +27,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import ConnectBtn from "./connect-btn";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -67,7 +68,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             {[
               { path: "/", label: "Dashboard", icon: Home },
               { path: "/charities", label: "Charities", icon: Heart },
-              { path: "/create-campaign", label: "Create Campaign", icon: Bitcoin },
+              {
+                path: "/create-campaign",
+                label: "Create Campaign",
+                icon: Bitcoin,
+              },
               { path: "/my-nfts", label: "My NFTs", icon: Gift },
               { path: "/donations", label: "Donations", icon: Wallet },
             ].map((item) => (
@@ -105,15 +110,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         <div className="border-t border-border/40 p-4">
-          <div className="flex items-center gap-3 rounded-lg bg-gradient-to-br from-card/80 to-card/40 p-3 backdrop-blur-sm border border-border/20 shadow-sm">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#F7931A] to-[#F5A623] text-white shadow-glow-sm">
-              <Bitcoin className="h-4 w-4" />
-            </div>
-            <div className="flex-1 text-xs">
-              <p className="font-medium">Connected Wallet</p>
-              <p className="text-muted-foreground truncate">0x1a2b...3c4d</p>
-            </div>
-          </div>
+          <ConnectBtn />
         </div>
       </aside>
 
@@ -156,7 +153,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               {[
                 { path: "/", label: "Dashboard", icon: Home },
                 { path: "/charities", label: "Charities", icon: Heart },
-                { path: "/create-campaign", label: "Create Campaign", icon: Bitcoin },
+                {
+                  path: "/create-campaign",
+                  label: "Create Campaign",
+                  icon: Bitcoin,
+                },
                 { path: "/my-nfts", label: "My NFTs", icon: Gift },
                 { path: "/donations", label: "Donations", icon: Wallet },
               ].map((item) => (
@@ -187,15 +188,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </nav>
           </div>
           <div className="absolute bottom-0 w-full border-t border-border/40 p-4">
-            <div className="flex items-center gap-3 rounded-lg bg-gradient-to-br from-card/80 to-card/40 p-3 backdrop-blur-sm border border-border/20 shadow-sm">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#F7931A] to-[#F5A623] text-white shadow-glow-sm">
-                <Bitcoin className="h-4 w-4" />
-              </div>
-              <div className="flex-1 text-xs">
-                <p className="font-medium">Connected Wallet</p>
-                <p className="text-muted-foreground truncate">0x1a2b...3c4d</p>
-              </div>
-            </div>
+            <ConnectBtn />
           </div>
         </motion.div>
       </div>
@@ -210,24 +203,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             className="md:hidden"
             onClick={() => setMobileOpen(true)}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-7 w-7" />
             <span className="sr-only">Toggle Menu</span>
           </Button>
 
-          <div className="flex items-center gap-2 md:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#F7931A] to-[#F5A623] text-white shadow-glow-sm">
-              <Bitcoin className="h-5 w-5" />
-            </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#F7931A] to-[#F5A623]">
-              BitGive
-            </span>
-          </div>
-
           <div className="flex items-center gap-4">
-            <Button variant="outline" className="hidden md:flex">
-              <Bitcoin className="mr-2 h-4 w-4 text-[#F7931A]" />
-              Connected: 0x1a2b...3c4d
-            </Button>
+            <ConnectBtn />
           </div>
         </header>
 
