@@ -76,19 +76,17 @@ const useGetNfts = () => {
 
       console.log(tokenDetails);
 
-      return results
-        .filter(({ status }) => status === "success")
-        .map(
+      return nftMetadataResults.map(
           (
             { result }: { result?: any; status: string; error?: Error },
             idx: number
           ) => ({
-            ...result,
             id: Number(result.id),
-            campaignId: Number(result.campaignId),
-            timestamp: Number(result.timestamp) * 1000, //converting time to milliseconds
-            amount: Number(formatUnits(result.amount, 18)),
-            campaignName: campaigns[idx].name,
+            title: tokenDetails[idx].name,
+            image: tokenDetails[idx].image,
+            date: Number(result.timestamp) * 1000, //converting time to milliseconds
+            tier: result.tier,
+            charity: result.campaignName,
           })
         );
     } catch (error: any) {
@@ -102,7 +100,7 @@ const useGetNfts = () => {
     return [];
   };
 
-  return { getOwnerNfts, isLoading, error };
+  return { getOwnerNFTs, isLoading, error };
 };
 
 export default useGetNfts;
