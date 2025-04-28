@@ -1,5 +1,5 @@
 import React from "react";
-import { client, wallets } from "@/lib/config";
+import { client, wallets, rootstockTestnet } from "@/lib/config";
 import { ConnectButton } from "thirdweb/react";
 import { darkTheme } from "thirdweb/react";
 
@@ -11,6 +11,7 @@ const ConnectBtn = () => {
       theme={darkTheme({
         colors: { accentText: "#F7931A" },
       })}
+      chain={rootstockTestnet}
       connectButton={{
         label: "Sign In",
         style: {
