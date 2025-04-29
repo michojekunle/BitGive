@@ -203,14 +203,6 @@ export default function CreateCampaignForm() {
 
   return (
     <div>
-      <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Create a New Campaign</CardTitle>
-          <CardDescription>
-            Fill in the details to start your fundraising campaign
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
           <div className="w-full py-4">
             <div className="relative flex items-center justify-between">
               {[1, 2, 3].map((step, index) => (
@@ -722,8 +714,7 @@ export default function CreateCampaignForm() {
               </div> */}
             </motion.div>
           )}
-        </CardContent>
-        <CardFooter className="flex justify-between">
+        <div className="flex justify-between">
           {currentStep > 1 ? (
             <Button
               type="button"
@@ -756,8 +747,7 @@ export default function CreateCampaignForm() {
           ) : (
             <ConnectBtn />
           )}
-        </CardFooter>
-      </Card>
+        </div>
     </div>
   );
 }

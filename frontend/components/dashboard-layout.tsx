@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import ConnectBtn from "./connect-btn";
+import { useActiveAccount } from "thirdweb/react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -36,6 +37,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const account = useActiveAccount();
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -45,6 +47,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const isActive = (path: string) => {
     if (path === "/" && pathname === "/") return true;
     if (path !== "/" && pathname.startsWith(path)) return true;
+    return false;
+  };
+
+  const requiresSignIn = () => {
+    if (pathname === "/" || pathname.startsWith("/charities")) return false;
+    if(!account) return true
     return false;
   };
 
@@ -219,7 +227,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {children}
+            {requiresSignIn() ? (
+              <div className="w-full h-full mt-16 flex flex-col items-center justify-center">
+                <h4 className="mb-5 font-medium text-lg text-muted-foreground">Please sign in to access this page</h4>
+                <ConnectBtn />
+              </div>
+            ) : (
+              children
+            )}
           </motion.div>
         </main>
 

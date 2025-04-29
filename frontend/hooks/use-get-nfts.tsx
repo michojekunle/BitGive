@@ -5,7 +5,7 @@ import { contracts } from "@/lib/contract";
 import { client, rootstockTestnet } from "@/lib/config";
 import useFetchCampaigns from "./use-fetch-campaigns";
 import { publicClient } from "@/lib/client";
-import { Abi, formatUnits } from "viem";
+import { Abi } from "viem";
 
 export interface NFTMetadata {
   id: number;
@@ -19,7 +19,6 @@ export interface NFTMetadata {
 const useGetNfts = () => {
   const account = useActiveAccount();
   const address = account?.address;
-  const { getCampaignsDetails } = useFetchCampaigns();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,17 +73,17 @@ const useGetNfts = () => {
         })
       );
 
-      console.log(tokenDetails);
+      // console.log("tokenDetails::", tokenDetails);
 
       return nftMetadataResults.map(
           (
             { result }: { result?: any; status: string; error?: Error },
             idx: number
           ) => ({
-            id: Number(result.id),
+            id: Number(result.tokenId),
             title: tokenDetails[idx].name,
             image: tokenDetails[idx].image,
-            date: Number(result.timestamp) * 1000, //converting time to milliseconds
+            date: Number(result.mintedAt) * 1000, //converting time to milliseconds
             tier: result.tier,
             charity: result.campaignName,
           })

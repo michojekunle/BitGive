@@ -1,17 +1,42 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bitcoin } from "lucide-react"
-import { motion } from "framer-motion"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { AlertTriangle, Bitcoin, LucideFileWarning } from "lucide-react";
+import { motion } from "framer-motion";
+import useDonations from "@/hooks/use-donations";
+import { useState, useEffect } from "react";
+import { Skeleton } from "./ui/skeleton";
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipTrigger,
+  TooltipContent,
+} from "./ui/tooltip";
+
+type Stats = {
+  totalDonated: number;
+  donors: number;
+  charitiesSupported: number;
+  nftsMinted: number;
+};
 
 export default function DonationSummary() {
-  // Mock data for donation summary
-  const stats = {
-    totalDonated: 2.45,
-    donors: 37,
-    charitiesSupported: 3,
-    nftsMinted: 42,
-  }
+  const { isLoading, error, getDonationStats } = useDonations();
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  useEffect(() => {
+    async function run() {
+      const stats = await getDonationStats();
+      setStats(stats);
+    }
+    run();
+  }, []);
 
   const container = {
     hidden: { opacity: 0 },
@@ -21,12 +46,25 @@ export default function DonationSummary() {
         staggerChildren: 0.1,
       },
     },
-  }
+  };
 
   const item = {
     hidden: { y: 20, opacity: 0 },
     show: { y: 0, opacity: 1 },
-  }
+  };
+
+  const ErrorIcon = () => (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <AlertTriangle className="text-red-500 cursor-help mt-4 w-5 h-5" />
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <p>Unable to fetch data</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 
   return (
     <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
@@ -50,7 +88,15 @@ export default function DonationSummary() {
                   </div>
                   <span className="text-sm font-medium">Total Donated</span>
                 </div>
-                <div className="mt-2 text-2xl font-bold">{stats.totalDonated} RBTC</div>
+                {isLoading ? (
+                  <Skeleton className="mt-2 w-12 h-7" />
+                ) : error ? (
+                  <ErrorIcon />
+                ) : (
+                  <div className="mt-2 text-2xl font-bold">
+                    {stats?.totalDonated} RBTC
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -78,7 +124,13 @@ export default function DonationSummary() {
                   </div>
                   <span className="text-sm font-medium">Donors</span>
                 </div>
-                <div className="mt-2 text-2xl font-bold">{stats.donors}</div>
+                {isLoading ? (
+                  <Skeleton className="mt-2 w-12 h-7" />
+                ) : error ? (
+                  <ErrorIcon />
+                ) : (
+                  <div className="mt-2 text-2xl font-bold">{stats?.donors}</div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -103,7 +155,15 @@ export default function DonationSummary() {
                   </div>
                   <span className="text-sm font-medium">Charities</span>
                 </div>
-                <div className="mt-2 text-2xl font-bold">{stats.charitiesSupported}</div>
+                {isLoading ? (
+                  <Skeleton className="mt-2 w-12 h-7" />
+                ) : error ? (
+                  <ErrorIcon />
+                ) : (
+                  <div className="mt-2 text-2xl font-bold">
+                    {stats?.charitiesSupported}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -137,12 +197,20 @@ export default function DonationSummary() {
                   </div>
                   <span className="text-sm font-medium">NFTs Minted</span>
                 </div>
-                <div className="mt-2 text-2xl font-bold">{stats.nftsMinted}</div>
+                {isLoading ? (
+                  <Skeleton className="mt-2 w-12 h-7" />
+                ) : error ? (
+                  <ErrorIcon />
+                ) : (
+                  <div className="mt-2 text-2xl font-bold">
+                    {stats?.nftsMinted}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
         </motion.div>
       </CardContent>
     </Card>
-  )
+  );
 }
