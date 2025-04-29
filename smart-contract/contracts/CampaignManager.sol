@@ -179,9 +179,10 @@ contract CampaignManager is AccessControl, ReentrancyGuard {
     ) external nonReentrant {
         CampaignInfo storage campaign = _getCampaign(_campaignId);
         _onlyOwner(campaign);
+        _requireActiveCampaign(campaign);
 
         if (_amount > address(this).balance) revert InsufficientFunds();
-
+        campaign.isActive = false;
         (bool sent, ) = payable(campaign.owner).call{value: _amount}("");
         if (!sent) revert WithdrawFailed();
 
