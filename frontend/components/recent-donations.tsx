@@ -1,46 +1,49 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Bitcoin, ArrowRight } from "lucide-react"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import DonationForm from "@/components/donation-form"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Bitcoin, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import useDonations, { DonationRecord } from "@/hooks/use-donations";
+import { formatDate } from "@/lib/utils";
+import { useActiveAccount } from "thirdweb/react";
+import Image from "next/image";
 
 export default function RecentDonations() {
-  // Mock data for recent donations
-  const donations = [
-    {
-      id: 1,
-      charity: "Clean Water Fund",
-      amount: "0.05 RBTC",
-      date: "Apr 13, 2025",
-      status: "completed",
-    },
-    {
-      id: 2,
-      charity: "Education for All",
-      amount: "0.02 RBTC",
-      date: "Apr 10, 2025",
-      status: "completed",
-    },
-    {
-      id: 3,
-      charity: "Disaster Relief",
-      amount: "0.01 RBTC",
-      date: "Apr 5, 2025",
-      status: "completed",
-    },
-  ]
+  const [donations, setDonations] = useState<DonationRecord[]>([]);
+  const { getRecentDonations, isLoading, error } = useDonations();
+  const account = useActiveAccount();
+
+  useEffect(() => {
+    async function run() {
+      const donations = await getRecentDonations();
+      setDonations(donations);
+    }
+    run();
+  }, [account]);
 
   return (
     <div className="">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <Card className="h-full overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Recent Donations</CardTitle>
-              <CardDescription>Your recent contributions</CardDescription>
+              <CardDescription>
+                Recent contributions to charities
+              </CardDescription>
             </div>
             <Link href="/donations">
               <Button
@@ -54,6 +57,12 @@ export default function RecentDonations() {
             </Link>
           </CardHeader>
           <CardContent>
+            {isLoading && (
+              <div className="flex items-center justify-center w-full h-full">
+                <Loader2 className="text-[#F5A623] w-11 h-11 text-2xl animate-spin" />
+              </div>
+            )}
+            {error && <div>An error occured fetching donations</div>}
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {donations.map((donation, index) => (
                 <motion.div
@@ -65,17 +74,31 @@ export default function RecentDonations() {
                   <Card className="overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#F7931A] to-[#F5A623] text-white shadow-glow-sm">
-                          <Bitcoin className="h-4 w-4" />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#F7931A] to-[#F5A623] text-white shadow-glow-sm overflow-hidden">
+                          <Image
+                            src={donation.campaignImage || "/placeholder.jpg"}
+                            alt="campaign-image"
+                            width={20}
+                            height={20}
+                            className="w-full h-full"
+                          />
                         </div>
                         <div className="flex-1 truncate">
-                          <h3 className="font-medium truncate">{donation.charity}</h3>
-                          <p className="text-xs text-muted-foreground">{donation.date}</p>
+                          <h3 className="font-medium truncate">
+                            {donation.campaignName}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(donation.timestamp)}
+                          </p>
                         </div>
                       </div>
                       <div className="mt-3 text-center">
-                        <div className="text-lg font-bold">{donation.amount}</div>
-                        <div className="text-xs text-muted-foreground">Donation Amount</div>
+                        <div className="text-lg font-bold">
+                          {donation.amount} RBTC
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Donation Amount
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -86,5 +109,5 @@ export default function RecentDonations() {
         </Card>
       </motion.div>
     </div>
-  )
+  );
 }

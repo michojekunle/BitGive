@@ -13,6 +13,7 @@ export async function POST(req: Request) {
 		const name = formData.get("name") as string;
 		const description = formData.get("description") as string;
 		const charityLink = formData.get("charityLink") as string;
+		const charityId = formData.get("charityId") as string;
 		const externalUrl = formData.get("externalUrl") as string;
 
 		if (!fileCID || !name || !description || !charityLink || !externalUrl) {
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
 			image: fileCID,
 			attributes: [
 				{ trait_type: "Donated To", value: charityLink },
+				{ trait_type: "Charity Id", value: charityId },
 			],
 		};
 

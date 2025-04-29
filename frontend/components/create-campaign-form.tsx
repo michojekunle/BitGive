@@ -37,6 +37,10 @@ import {
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useActiveAccount } from "thirdweb/react";
+import ConnectBtn from "./connect-btn";
+import useCreateCampaign from "@/hooks/use-create-campaign";
+import { toast } from 'sonner';
 
 export default function CreateCampaignForm() {
   const router = useRouter();
@@ -44,9 +48,8 @@ export default function CreateCampaignForm() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    longDescription: "",
-    category: "",
-    goal: "",
+    story: "",
+    goal: 0,
     duration: "30",
     image: null as File | null,
     imagePreview: "",
@@ -54,8 +57,9 @@ export default function CreateCampaignForm() {
     impacts: [""], // Add this new field for impact statements
   });
   const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const account = useActiveAccount();
+  const { createCampaign, isLoading, error } = useCreateCampaign();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -102,20 +106,26 @@ export default function CreateCampaignForm() {
     setFormData((prev) => ({ ...prev, impacts: newImpacts }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const handleSubmit = async () => {
+    const loadingToast = toast.loading("Creating campaign...");
+    
+    await createCampaign({
+      name: formData.name,
+      description: formData.description,
+      story: formData.story,
+      image: formData.image!,
+      goal: formData.goal,
+      duration: Number(formData.duration),
+      impacts: formData.impacts,
+    });
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    if(!error && !isLoading) {
       setIsSuccess(true);
-
-      // Redirect after success
-      setTimeout(() => {
-        router.push("/charities");
-      }, 3000);
-    }, 2000);
+      toast.success("Campaign created successfully!");
+    } else {
+      toast.error("Error creating campaign. Please try again.");
+    }
+    toast.dismiss(loadingToast);
   };
 
   const nextStep = () => {
@@ -128,10 +138,10 @@ export default function CreateCampaignForm() {
 
   const isStepComplete = (step: number) => {
     if (step === 1) {
-      return formData.name && formData.description && formData.category;
+      return formData.name && formData.description;
     }
     if (step === 2) {
-      return formData.goal && formData.duration && formData.longDescription;
+      return formData.goal && formData.duration && formData.story;
     }
     return true;
   };
@@ -192,15 +202,7 @@ export default function CreateCampaignForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Create a New Campaign</CardTitle>
-          <CardDescription>
-            Fill in the details to start your fundraising campaign
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div>
           <div className="w-full py-4">
             <div className="relative flex items-center justify-between">
               {[1, 2, 3].map((step, index) => (
@@ -296,31 +298,6 @@ export default function CreateCampaignForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) =>
-                    handleSelectChange("category", value)
-                  }
-                >
-                  <SelectTrigger
-                    id="category"
-                    className="border-border/40 bg-background/50"
-                  >
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="water">Clean Water</SelectItem>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="disaster">Disaster Relief</SelectItem>
-                    <SelectItem value="health">Healthcare</SelectItem>
-                    <SelectItem value="environment">Environment</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="image">Campaign Image</Label>
                 <div className="mt-1 flex items-center gap-4">
                   <div
@@ -369,7 +346,7 @@ export default function CreateCampaignForm() {
             </motion.div>
           )}
 
-          {/* In the second step (currentStep === 2), add the impact fields section after the longDescription field */}
+          {/* In the second step (currentStep === 2), add the impact fields section after the story field */}
           {currentStep === 2 && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -388,11 +365,11 @@ export default function CreateCampaignForm() {
                   onChange={handleInputChange}
                   placeholder="e.g., 1.5"
                   step="0.01"
-                  min="0.1"
+                  min="0.001"
                   className="border-border/40 bg-background/50"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Minimum goal: 0.1 RBTC
+                  Minimum goal: 0.001 RBTC
                 </p>
               </div>
 
@@ -421,11 +398,11 @@ export default function CreateCampaignForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="longDescription">Detailed Description</Label>
+                <Label htmlFor="story">Your Story</Label>
                 <Textarea
-                  id="longDescription"
-                  name="longDescription"
-                  value={formData.longDescription}
+                  id="story"
+                  name="story"
+                  value={formData.story}
                   onChange={handleInputChange}
                   placeholder="Provide a detailed description of your campaign, its goals, and how the funds will be used"
                   className="border-border/40 bg-background/50 resize-none"
@@ -437,15 +414,6 @@ export default function CreateCampaignForm() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Campaign Impact</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addImpactField}
-                    className="border-border/40 hover:border-[#F5A623]/60 hover:bg-gradient-to-br hover:from-[#F7931A]/10 hover:to-[#F5A623]/10"
-                  >
-                    Add Impact
-                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mb-2">
                   List the specific impacts your campaign will achieve
@@ -488,6 +456,17 @@ export default function CreateCampaignForm() {
                     )}
                   </div>
                 ))}
+                <div className="flex items-center justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addImpactField}
+                    className="border-border/40 hover:border-[#F5A623]/60 hover:bg-gradient-to-br hover:from-[#F7931A]/10 hover:to-[#F5A623]/10"
+                  >
+                    Add Impact
+                  </Button>
+                </div>
               </div>
 
               <div className="rounded-lg border border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm p-4">
@@ -579,40 +558,6 @@ export default function CreateCampaignForm() {
                           <span>{formData.duration || "30"} days</span>
                         </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground">
-                          Category
-                        </h4>
-                        <div className="mt-1 flex items-center gap-2">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="text-[#F5A623]"
-                          >
-                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                          </svg>
-                          <span>
-                            {formData.category === "water"
-                              ? "Clean Water"
-                              : formData.category === "education"
-                              ? "Education"
-                              : formData.category === "disaster"
-                              ? "Disaster Relief"
-                              : formData.category === "health"
-                              ? "Healthcare"
-                              : formData.category === "environment"
-                              ? "Environment"
-                              : formData.category || "Category"}
-                          </span>
-                        </div>
-                      </div>
                     </div>
                   </div>
 
@@ -649,22 +594,6 @@ export default function CreateCampaignForm() {
                         <span className="text-muted-foreground">Name</span>
                         <span className="font-medium">
                           {formData.name || "Not specified"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-b border-border/40 pb-2">
-                        <span className="text-muted-foreground">Category</span>
-                        <span className="font-medium">
-                          {formData.category === "water"
-                            ? "Clean Water"
-                            : formData.category === "education"
-                            ? "Education"
-                            : formData.category === "disaster"
-                            ? "Disaster Relief"
-                            : formData.category === "health"
-                            ? "Healthcare"
-                            : formData.category === "environment"
-                            ? "Environment"
-                            : formData.category || "Not specified"}
                         </span>
                       </div>
                       <div className="flex justify-between border-b border-border/40 pb-2">
@@ -760,7 +689,7 @@ export default function CreateCampaignForm() {
                 </Label>
               </div>
 
-              <div className="mt-4 rounded-lg border border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm p-4">
+              {/* <div className="mt-4 rounded-lg border border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm p-4">
                 <div className="flex items-start gap-3">
                   <Bitcoin className="mt-0.5 h-5 w-5 text-[#F5A623]" />
                   <div>
@@ -782,11 +711,10 @@ export default function CreateCampaignForm() {
                     </a>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </motion.div>
           )}
-        </CardContent>
-        <CardFooter className="flex justify-between">
+        <div className="flex justify-between">
           {currentStep > 1 ? (
             <Button
               type="button"
@@ -799,7 +727,7 @@ export default function CreateCampaignForm() {
           ) : (
             <div></div>
           )}
-          {currentStep < 3 ? (
+          {currentStep <= 2 ? (
             <Button
               type="button"
               onClick={nextStep}
@@ -808,17 +736,18 @@ export default function CreateCampaignForm() {
             >
               Continue
             </Button>
-          ) : (
+          ) : account ? (
             <Button
-              type="submit"
-              disabled={isSubmitting}
+              disabled={isLoading}
+              onClick={handleSubmit}
               className="bg-gradient-to-r from-[#F7931A] to-[#F5A623] text-white hover:from-[#F5A623] hover:to-[#F7931A] shadow-glow-sm disabled:opacity-50"
             >
-              {isSubmitting ? "Creating Campaign..." : "Create Campaign"}
+              {isLoading ? "Creating Campaign..." : "Create Campaign"}
             </Button>
+          ) : (
+            <ConnectBtn />
           )}
-        </CardFooter>
-      </Card>
-    </form>
+        </div>
+    </div>
   );
 }

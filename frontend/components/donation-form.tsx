@@ -1,42 +1,77 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Bitcoin, ExternalLink } from "lucide-react"
-import { motion } from "framer-motion"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Bitcoin, ExternalLink, Info } from "lucide-react";
+import { motion } from "framer-motion";
+import useDonations from "@/hooks/use-donations";
+import { toast } from "sonner";
+import { useActiveAccount } from "thirdweb/react";
+import ConnectBtn from "./connect-btn";
 
-export default function DonationForm() {
-  const [amount, setAmount] = useState<string>("")
-  const [status, setStatus] = useState<string | null>(null)
+export default function DonationForm({
+  campaignId,
+  verified,
+}: {
+  campaignId: number;
+  verified: boolean;
+}) {
+  const [amount, setAmount] = useState<string>("");
+  const [status, setStatus] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState("");
+  const { donateToCampaign, isLoading, error } = useDonations();
+  const account = useActiveAccount();
 
   const handleAmountSelect = (value: string) => {
-    setAmount(value)
-  }
+    setAmount(value);
+  };
 
-  const handleDonate = () => {
-    setStatus("connecting")
-    // Simulate transaction process
-    setTimeout(() => {
-      setStatus("awaiting")
-      setTimeout(() => {
-        setStatus("success")
-      }, 2000)
-    }, 1500)
-  }
+  const handleDonate = async () => {
+    const loadingToast = toast.loading("Donating to campaign");
+    try {
+      setStatus("awaiting");
+      const tier = getNftTier();
+      const txReceipt = await donateToCampaign(
+        campaignId,
+        amount,
+        tier ? tier : ""
+      );
+      if (error) throw error;
+
+      if (txReceipt?.status === "success") {
+        setStatus("success");
+        toast.success("Donated to campaign successfully");
+        setTxHash(txReceipt.transactionHash);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error donating to campaign, please try again");
+      setStatus(null);
+    } finally {
+      toast.dismiss(loadingToast);
+    }
+  };
 
   // Determine NFT tier based on amount
   const getNftTier = () => {
-    const amountNum = Number.parseFloat(amount || "0")
-    if (amountNum >= 0.01) return "Gold"
-    if (amountNum >= 0.005) return "Silver"
-    if (amountNum >= 0.001) return "Bronze"
-    return null
-  }
+    const amountNum = Number.parseFloat(amount || "0");
+    if (amountNum >= 0.01) return "Gold";
+    if (amountNum >= 0.005) return "Silver";
+    if (amountNum >= 0.001) return "Bronze";
+    return null;
+  };
 
-  const tier = getNftTier()
+  const tier = getNftTier();
 
   return (
     <Card className="h-full overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
@@ -54,7 +89,7 @@ export default function DonationForm() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             step="0.001"
-            min="0.001"
+            min="0.00001"
             className="border-border/40 bg-background/50"
           />
           <div className="flex gap-2 pt-1">
@@ -62,7 +97,11 @@ export default function DonationForm() {
               variant="outline"
               size="sm"
               onClick={() => handleAmountSelect("0.001")}
-              className={`border-border/40 ${amount === "0.001" ? "border-[#F5A623]/60 bg-gradient-to-br from-[#F7931A]/10 to-[#F5A623]/10" : ""}`}
+              className={`border-border/40 ${
+                amount === "0.001"
+                  ? "border-[#F5A623]/60 bg-gradient-to-br from-[#F7931A]/10 to-[#F5A623]/10"
+                  : ""
+              }`}
             >
               0.001
             </Button>
@@ -70,7 +109,11 @@ export default function DonationForm() {
               variant="outline"
               size="sm"
               onClick={() => handleAmountSelect("0.005")}
-              className={`border-border/40 ${amount === "0.005" ? "border-[#F5A623]/60 bg-gradient-to-br from-[#F7931A]/10 to-[#F5A623]/10" : ""}`}
+              className={`border-border/40 ${
+                amount === "0.005"
+                  ? "border-[#F5A623]/60 bg-gradient-to-br from-[#F7931A]/10 to-[#F5A623]/10"
+                  : ""
+              }`}
             >
               0.005
             </Button>
@@ -78,7 +121,11 @@ export default function DonationForm() {
               variant="outline"
               size="sm"
               onClick={() => handleAmountSelect("0.01")}
-              className={`border-border/40 ${amount === "0.01" ? "border-[#F5A623]/60 bg-gradient-to-br from-[#F7931A]/10 to-[#F5A623]/10" : ""}`}
+              className={`border-border/40 ${
+                amount === "0.01"
+                  ? "border-[#F5A623]/60 bg-gradient-to-br from-[#F7931A]/10 to-[#F5A623]/10"
+                  : ""
+              }`}
             >
               0.01
             </Button>
@@ -93,12 +140,16 @@ export default function DonationForm() {
             className="rounded-lg border border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm p-4"
           >
             <h4 className="mb-2 text-sm font-medium">NFT Reward Preview</h4>
-            <div className="flex items-center gap-4">
+            <div className="flex sm:flex-col md:flex-row items-center gap-4">
               <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-border/40 bg-gradient-to-br from-[#F7931A]/20 to-[#F5A623]/20 shadow-glow-sm">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span
                     className={`text-xs font-bold ${
-                      tier === "Gold" ? "text-[#F5A623]" : tier === "Silver" ? "text-gray-400" : "text-amber-700"
+                      tier === "Gold"
+                        ? "text-[#F5A623]"
+                        : tier === "Silver"
+                        ? "text-gray-400"
+                        : "text-amber-700"
                     }`}
                   >
                     {tier}
@@ -116,14 +167,34 @@ export default function DonationForm() {
         )}
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        <Button
-          className="w-full bg-gradient-to-r from-[#F7931A] to-[#F5A623] text-white hover:from-[#F5A623] hover:to-[#F7931A] shadow-glow-sm"
-          onClick={handleDonate}
-          disabled={!amount || !!status}
-        >
-          <Bitcoin className="mr-2 h-4 w-4" />
-          Donate with RBTC
-        </Button>
+        {account ? (
+          <Button
+            className="w-full bg-gradient-to-r from-[#F7931A] to-[#F5A623] text-white hover:from-[#F5A623] hover:to-[#F7931A] shadow-glow-sm"
+            onClick={handleDonate}
+            disabled={!amount || !!status || isLoading || !verified}
+          >
+            <Bitcoin className="mr-2 h-4 w-4" />
+            Donate with RBTC
+          </Button>
+        ) : (
+          <ConnectBtn />
+        )}
+
+        {!verified && (
+          <div className="rounded-lg border border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm p-4">
+            <div className="flex items-start gap-3">
+              <Info className="mt-0.5 h-5 w-5 text-[#F5A623]" />
+              <div>
+                <h4 className="font-medium">Campaign Not Verified</h4>
+                <p className="text-sm text-muted-foreground">
+                  Campaign is still undergoing verification, Once the campaign
+                  is verified, you'll be able to donate. Please check back in a
+                  while.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {status && (
           <motion.div
@@ -132,13 +203,18 @@ export default function DonationForm() {
             transition={{ duration: 0.3 }}
             className="w-full rounded-lg border border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm p-3 text-center text-sm"
           >
-            {status === "connecting" && <span className="text-muted-foreground">Connecting to wallet...</span>}
-            {status === "awaiting" && <span className="text-muted-foreground">Awaiting confirmation...</span>}
+            {status === "awaiting" && (
+              <span className="text-muted-foreground">
+                Awaiting confirmation...
+              </span>
+            )}
             {status === "success" && (
               <span className="flex items-center justify-center gap-1 font-medium text-green-500">
-                Success! NFT Minted
+                Success! Donation Completed{" "}
+                {tier && " with NFT minted successfully"}
                 <a
-                  href="#"
+                  href={`https://rootstock-testnet.blockscout.com/tx/${txHash}`}
+                  target="_blank"
                   className="ml-1 inline-flex items-center text-xs text-[#F5A623] hover:text-[#F7931A] transition-colors"
                 >
                   View Transaction
@@ -150,5 +226,5 @@ export default function DonationForm() {
         )}
       </CardFooter>
     </Card>
-  )
+  );
 }
