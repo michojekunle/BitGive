@@ -62,6 +62,7 @@ export default function RecentDonations() {
               </div>
             )}
             {error && <div>An error occured fetching donations</div>}
+            {donations.length === 0 && <div>No recent donations</div>}
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {donations.map((donation, index) => (
                 <motion.div
