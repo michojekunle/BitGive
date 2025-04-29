@@ -267,9 +267,9 @@ export default function CreateCampaignForm() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-4"
+              className="space-y-8"
             >
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label htmlFor="name">Campaign Name</Label>
                 <Input
                   id="name"
@@ -281,7 +281,7 @@ export default function CreateCampaignForm() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label htmlFor="description">Short Description</Label>
                 <Textarea
                   id="description"
@@ -297,7 +297,7 @@ export default function CreateCampaignForm() {
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label htmlFor="image">Campaign Image</Label>
                 <div className="mt-1 flex items-center gap-4">
                   <div
@@ -353,9 +353,9 @@ export default function CreateCampaignForm() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-4"
+              className="space-y-8"
             >
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label htmlFor="goal">Fundraising Goal (RBTC)</Label>
                 <Input
                   id="goal"
@@ -373,7 +373,7 @@ export default function CreateCampaignForm() {
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label htmlFor="duration">Campaign Duration (Days)</Label>
                 <Select
                   value={formData.duration}
@@ -397,7 +397,7 @@ export default function CreateCampaignForm() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label htmlFor="story">Your Story</Label>
                 <Textarea
                   id="story"
@@ -411,7 +411,7 @@ export default function CreateCampaignForm() {
               </div>
 
               {/* Add the Impact Fields section here */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>Campaign Impact</Label>
                 </div>
@@ -456,7 +456,7 @@ export default function CreateCampaignForm() {
                     )}
                   </div>
                 ))}
-                <div className="flex items-center justify-end">
+                <div className="mt-3 flex items-center justify-end">
                   <Button
                     type="button"
                     variant="outline"
@@ -714,7 +714,7 @@ export default function CreateCampaignForm() {
               </div> */}
             </motion.div>
           )}
-        <div className="flex justify-between">
+        <div className="flex justify-between mt-5">
           {currentStep > 1 ? (
             <Button
               type="button"
