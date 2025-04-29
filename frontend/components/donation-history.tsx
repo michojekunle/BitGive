@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import useDonations, { DonationRecord } from "@/hooks/use-donations";
 import { formatDate, formatTime } from "@/lib/utils";
 import { useActiveAccount } from "thirdweb/react";
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
 
 export default function DonationHistory() {
   const [donations, setDonations] = useState<DonationRecord[]>([]);
@@ -44,10 +44,18 @@ export default function DonationHistory() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted overflow-hidden">
-                  <Image src={donation.campaignImage || '/placeholder.jpg'} alt="campaign-image" width={20} height={20} className="w-full h-full"/>
+                  <Image
+                    src={donation.campaignImage || "/placeholder.jpg"}
+                    alt="campaign-image"
+                    width={20}
+                    height={20}
+                    className="w-full h-full"
+                  />
                 </div>
                 <div>
-                  <Link href={`/charities/${donation.campaignId}`}><h3 className="font-medium">{donation.campaignName}</h3></Link>
+                  <Link href={`/charities/${donation.campaignId}`}>
+                    <h3 className="font-medium">{donation.campaignName}</h3>
+                  </Link>
                   <p className="text-sm text-muted-foreground">
                     {formatDate(donation.timestamp)} at{" "}
                     {formatTime(donation.timestamp)}
@@ -60,12 +68,14 @@ export default function DonationHistory() {
                 <div className="text-sm text-muted-foreground">Amount</div>
                 <div className="font-medium">{donation.amount} RBTC</div>
               </div>
-              <div>
-                <div className="text-sm text-muted-foreground">
-                  NFT Received
+              {donation.nftId && (
+                <div>
+                  <div className="text-sm text-muted-foreground">
+                    NFT Received
+                  </div>
+                  <div className="font-medium">{donation.nftId}</div>
                 </div>
-                <div className="font-medium">{donation.nftId}</div>
-              </div>
+              )}
             </div>
           </div>
         ))}
