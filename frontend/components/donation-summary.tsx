@@ -79,7 +79,7 @@ export default function DonationSummary() {
           initial="hidden"
           animate="show"
         >
-          <motion.div variants={item}>
+          <motion.div variants={item} className="col-span-2 sm:col-span-1">
             <Card className="overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -94,7 +94,7 @@ export default function DonationSummary() {
                   <ErrorIcon />
                 ) : (
                   <div className="mt-2 text-2xl font-bold">
-                    {stats?.totalDonated} RBTC
+                    {stats?.totalDonated.toFixed(4)} RBTC
                   </div>
                 )}
               </CardContent>

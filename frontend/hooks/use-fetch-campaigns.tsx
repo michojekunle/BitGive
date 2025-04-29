@@ -96,7 +96,7 @@ const useFetchCampaigns = () => {
     }
   };
 
-  const getOwnerCampaigns = async (owner: string) => {
+  const getOwnerCampaigns = async (owner: string): Promise<Campaign[]> => {
     try {
       setLoading(true);
       setError(null);
@@ -116,6 +116,7 @@ const useFetchCampaigns = () => {
     } finally {
       setLoading(false);
     }
+    return []
   };
 
   const getAllCampaigns = async (): Promise<Campaign[]> => {
@@ -129,15 +130,15 @@ const useFetchCampaigns = () => {
         params: [],
       });
 
-      console.log("All campaigns ids:: ", allCampaignsIds);
+      // console.log("All campaigns ids:: ", allCampaignsIds);
 
       const allCampaigns = await getCampaignsDetails(
         allCampaignsIds as number[]
       );
 
-      console.log("All campaigns:: ", allCampaigns);
+      // console.log("All campaigns:: ", allCampaigns);
 
-      return allCampaigns as Campaign[];
+      return allCampaigns;
     } catch (err: any) {
       setError(err.message || "Failed to fetch all campaigns");
     } finally {

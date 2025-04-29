@@ -76,18 +76,18 @@ const useGetNfts = () => {
       // console.log("tokenDetails::", tokenDetails);
 
       return nftMetadataResults.map(
-          (
-            { result }: { result?: any; status: string; error?: Error },
-            idx: number
-          ) => ({
-            id: Number(result.tokenId),
-            title: tokenDetails[idx].name,
-            image: tokenDetails[idx].image,
-            date: Number(result.mintedAt) * 1000, //converting time to milliseconds
-            tier: result.tier,
-            charity: result.campaignName,
-          })
-        );
+        (
+          { result }: { result?: any; status: string; error?: Error },
+          idx: number
+        ) => ({
+          id: Number(result.tokenId),
+          title: tokenDetails[idx].name,
+          image: tokenDetails[idx].image,
+          date: Number(result.mintedAt) * 1000, //converting time to milliseconds
+          tier: result.tier,
+          charity: result.campaignName,
+        })
+      );
     } catch (error: any) {
       setError(
         error.message || "An error occured while fetching Donor Donations"

@@ -16,12 +16,14 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import Link from "next/link";
 import useFetchCampaigns, { Campaign } from "@/hooks/use-fetch-campaigns";
+import { useActiveAccount } from "thirdweb/react";
 
 export default function CharityExplorer() {
   const [charities, setCharities] = useState<Campaign[]>([]);
   const [search, setSearch] = useState("");
   const [filteredCharities, setFilteredCharities] = useState(charities);
-  const { getAllCampaigns, loading, error } = useFetchCampaigns();
+  const { getOwnerCampaigns, loading, error } = useFetchCampaigns();
+  const account = useActiveAccount();
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -38,12 +40,14 @@ export default function CharityExplorer() {
 
   useEffect(() => {
     async function run() {
-      const campaigns = await getAllCampaigns();
+      if (!account) return;
+      const campaigns = await getOwnerCampaigns(account?.address);
+      
       setCharities(campaigns);
       setFilteredCharities(campaigns);
     }
     run();
-  }, []);
+  }, [account]);
 
   return (
     <>
@@ -63,11 +67,11 @@ export default function CharityExplorer() {
           <Loader2 className="text-[#F5A623] w-11 h-11 text-2xl animate-spin" />
         </div>
       )}
-      {error && <div>An error occured fetching all charities</div>}
+      {error && <div>An error occured fetching owner charities</div>}
 
       {charities.length === 0 && !loading && (
         <div className="flex items-center justify-center w-full h-full">
-          <p className="text-muted-foreground">No charities found</p>
+          <p className="text-muted-foreground">You haven't created any charities yet</p>
         </div>
       )}
 
