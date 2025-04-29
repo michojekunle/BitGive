@@ -42,6 +42,7 @@ export default function CharityList() {
           </div>
         )}
         {error && <div>An error occured fetching featured charities</div>}
+        {charities.length === 0 && <div>No featured charities</div>}
         {charities.slice(0, 3).map((charity, index) => (
           <motion.div
             key={charity.id}
