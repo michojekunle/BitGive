@@ -51,8 +51,8 @@ export default function CharityList() {
           >
             <Link href={`/charities/${charity.id}`}>
               <Card className="overflow-hidden border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm hover:shadow-md hover:border-border/60 transition-all duration-300">
-                <div className="flex gap-3 p-3">
-                  <div className="relative h-20 w-40 overflow-hidden rounded-md">
+                <div className="flex flex-col sm:flex-row gap-3 p-3">
+                  <div className="relative w-full h-36 sm:h-20 sm:w-40 overflow-hidden rounded-md">
                     <Image
                       src={charity.imageURI || "/placeholder.svg"}
                       alt={charity.name}

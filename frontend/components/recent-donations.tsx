@@ -32,7 +32,6 @@ export default function RecentDonations() {
   }, [account]);
 
   return (
-    <div className="">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -108,6 +107,5 @@ export default function RecentDonations() {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
   );
 }

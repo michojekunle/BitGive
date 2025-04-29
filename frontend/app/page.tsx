@@ -14,10 +14,11 @@ export default function Dashboard() {
         </div>
 
         {/* bottom row */}
-        <div className="md:col-span-2 lg:col-span-1">
+        <div className="col-span-2 lg:col-span-1">
           <CharityList />
         </div>
-        <div className="md:col-span-2 lg:col-span-1">
+
+        <div className="col-span-2 lg:col-span-1">
           <RecentDonations />
         </div>
       </div>

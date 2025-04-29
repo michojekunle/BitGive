@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Bitcoin,
+  FolderHeart,
   Gift,
   Heart,
   Home,
@@ -52,7 +53,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const requiresSignIn = () => {
     if (pathname === "/" || pathname.startsWith("/charities")) return false;
-    if(!account) return true
+    if (!account) return true;
     return false;
   };
 
@@ -76,6 +77,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             {[
               { path: "/", label: "Dashboard", icon: Home },
               { path: "/charities", label: "Charities", icon: Heart },
+              {
+                path: "/your-charities",
+                label: "Your Charities",
+                icon: FolderHeart,
+              },
               {
                 path: "/create-campaign",
                 label: "Create Campaign",
@@ -162,6 +168,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 { path: "/", label: "Dashboard", icon: Home },
                 { path: "/charities", label: "Charities", icon: Heart },
                 {
+                  path: "/your-charities",
+                  label: "Your Charities",
+                  icon: FolderHeart,
+                },
+                {
                   path: "/create-campaign",
                   label: "Create Campaign",
                   icon: Bitcoin,
@@ -229,7 +240,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           >
             {requiresSignIn() ? (
               <div className="w-full h-full mt-16 flex flex-col items-center justify-center">
-                <h4 className="mb-5 font-medium text-lg text-muted-foreground">Please sign in to access this page</h4>
+                <h4 className="mb-5 font-medium text-lg text-muted-foreground">
+                  Please sign in to access this page
+                </h4>
                 <ConnectBtn />
               </div>
             ) : (

@@ -6,15 +6,15 @@ import registryAbi from "../abi/registry.json";
 
 export const contracts = {
     campaignManager: {
-        address: "0x57A783371456B956cfB7FaC2bAB7478fc98b85E4",
+        address: "0x20cA2D979F717d87ddcf6ACe153a2C4fcC70A6e0",
         abi: campaignManagerAbi,
     },
     donationManager: {
-        address: "0x0aA1A5c7970FC6716a589da1E861E2DB7f0dbdf2",
+        address: "0x7107A0A1b0ead52B573262dbd582e96011DF4DcB",
         abi: donationManagerAbi,
     },
     nftReward: {
-        address: "0x6Be0fC1FA590d4300e9C1Af59f551dFA082464ef",
+        address: "0xD0682636229b1c2Aee113c2614A9c0Ab25518B88",
         abi: nftRewardAbi,
     },
     registry: {

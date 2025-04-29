@@ -63,7 +63,19 @@ export default function CharityExplorer() {
           <Loader2 className="text-[#F5A623] w-11 h-11 text-2xl animate-spin" />
         </div>
       )}
-      {error && <div>An error occured fetching featured charities</div>}
+      {error && <div>An error occured fetching all charities</div>}
+
+      {charities.length === 0 && !loading && (
+        <div className="flex items-center justify-center w-full h-full">
+          <p className="text-muted-foreground">No charities found</p>
+        </div>
+      )}
+
+      {filteredCharities.length === 0 && !loading && search && (
+        <div className="flex items-center justify-center w-full h-full">
+          <p className="text-muted-foreground">No charities found matching your search.</p>
+        </div>
+      )}
       
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filteredCharities.map((charity) => (
