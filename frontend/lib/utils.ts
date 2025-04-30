@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(ms: number): string {
   const date = new Date(ms);
-  console.log(ms);
+  // console.log(ms);
 
   return date.toLocaleDateString("en-US", {
     year: "numeric",
@@ -43,7 +43,7 @@ export async function uploadImageToIPFS(imageFile: File, name: string) {
     }
 
     const data = await response.json();
-    console.log("File CID:", data.fileCID);
+    // console.log("File CID:", data.fileCID);
     return data.fileCID;
   } catch (error) {
     console.error("Error uploading image:", error);
