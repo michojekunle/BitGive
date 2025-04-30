@@ -32,7 +32,7 @@ export default function CharityDetail({ charityId }: { charityId: number }) {
     async function run() {
       const campaign = await fetchCampaignDetails(charityId);
 
-      console.log(campaign);
+      // console.log(campaign);
       if (campaign) {
         setCharity(campaign);
       }

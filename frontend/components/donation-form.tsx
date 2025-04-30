@@ -53,9 +53,9 @@ export default function DonationForm({
         toast.success("Donated to campaign successfully");
         setTxHash(txReceipt.transactionHash);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Error donating to campaign, please try again");
+      toast.error(error?.message || "Error donating to campaign, please try again");
       setStatus(null);
     } finally {
       toast.dismiss(loadingToast);
@@ -182,8 +182,10 @@ export default function DonationForm({
 
         {!verified && (
           <div className="rounded-lg border border-border/40 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm p-4">
-            <div className="flex items-start gap-3">
-              <Info className="mt-0.5 h-5 w-5 text-[#F5A623]" />
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex items-center justify-center w-full p-1 ">
+                <Info className="mt-0.5 h-8 w-8 text-[#F5A623]" />
+              </div>
               <div>
                 <h4 className="font-medium">Campaign Not Verified</h4>
                 <p className="text-sm text-muted-foreground">

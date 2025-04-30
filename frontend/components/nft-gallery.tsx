@@ -30,9 +30,9 @@ export default function NftGallery() {
           position: "top-center",
         });
       })
-      .catch((error) => {
+      .catch((error): any => {
         console.error("Failed to copy:", error);
-        toast.error("Failed to copy the NFT link.", {
+        toast.error(error?.message || "Failed to copy the NFT link.", {
           position: "top-center",
         });
       });

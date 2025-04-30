@@ -91,9 +91,9 @@ export default function WithdrawForm({
       toast.success("Funds withdrawn successfully", {
         description: `${raisedAmount} RBTC has been withdrawn to your wallet`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Withdrawal error:", error);
-      toast.error("Withdrawal failed", {
+      toast.error(error?.message || "Withdrawal failed", {
         description: "There was an error withdrawing funds. Please try again.",
       });
     } finally {

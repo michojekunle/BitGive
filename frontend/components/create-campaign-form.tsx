@@ -108,24 +108,30 @@ export default function CreateCampaignForm() {
 
   const handleSubmit = async () => {
     const loadingToast = toast.loading("Creating campaign...");
-    
-    await createCampaign({
-      name: formData.name,
-      description: formData.description,
-      story: formData.story,
-      image: formData.image!,
-      goal: formData.goal,
-      duration: Number(formData.duration),
-      impacts: formData.impacts,
-    });
 
-    if(!error && !isLoading) {
-      setIsSuccess(true);
-      toast.success("Campaign created successfully!");
-    } else {
-      toast.error("Error creating campaign. Please try again.");
+    try {
+      await createCampaign({
+        name: formData.name,
+        description: formData.description,
+        story: formData.story,
+        image: formData.image!,
+        goal: formData.goal,
+        duration: Number(formData.duration),
+        impacts: formData.impacts,
+      });
+  
+      if(!error && !isLoading) {
+        setIsSuccess(true);
+        toast.success("Campaign created successfully!");
+      } else {
+        throw error
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Error creating campaign. Please try again.");
+    } finally {
+      toast.dismiss(loadingToast);
     }
-    toast.dismiss(loadingToast);
+    
   };
 
   const nextStep = () => {
