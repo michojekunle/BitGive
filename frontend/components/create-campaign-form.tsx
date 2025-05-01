@@ -178,14 +178,14 @@ export default function CreateCampaignForm() {
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
-              <h2 className="mb-2 text-2xl font-bold">
+              <h2 className="mb-2 text-xl sm:text-2xl font-bold">
                 Campaign Created Successfully!
               </h2>
               <p className="mb-6 text-muted-foreground">
                 Your charity campaign has been submitted and is now pending
                 approval.
               </p>
-              <div className="flex gap-4">
+              <div className="flex sm:flex-row flex-col gap-4">
                 <Button
                   variant="outline"
                   className="border-border/40 hover:border-[#F5A623]/60 hover:bg-gradient-to-br hover:from-[#F7931A]/10 hover:to-[#F5A623]/10"
